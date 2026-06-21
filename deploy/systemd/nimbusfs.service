@@ -1,0 +1,15 @@
+[Unit]
+Description=NimbusFS file browser
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/nimbusfs serve -config /etc/nimbusfs/config.yaml
+# Runs as root: PAM auth and per-request impersonation of the authenticated
+# Linux user (so filesystem access is checked against real Linux permissions)
+# both require root privileges. See internal/fsops/identity.go.
+User=root
+Restart=on-failure
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target

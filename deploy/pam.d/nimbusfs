@@ -1,0 +1,7 @@
+#
+# PAM service file for nimbusfs. Install to /etc/pam.d/nimbusfs.
+#
+# Mirrors the standard Debian/Ubuntu account/auth stack used by services
+# like sshd, so any account that can log into the box can log into nimbusfs.
+auth    include common-auth
+account include common-account
