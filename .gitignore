@@ -1,0 +1,7 @@
+/nimbusfs
+/dist/
+/web/node_modules/
+/web/dist/
+*.db
+*.db-journal
+.DS_Store
