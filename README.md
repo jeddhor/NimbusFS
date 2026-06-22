@@ -9,8 +9,8 @@ separate user database to administer.
 This is the v1 MVP slice: PAM login, SSH public-key login, reverse-proxy
 header login, sandboxed file browsing (list, upload, download, rename,
 move, copy, delete, create), image/video/audio/pdf/text preview,
-sqlite-backed sessions, CSRF protection, and audit logging. Sharing,
-search, and thumbnails are not yet built.
+temporary share links, sqlite-backed sessions, CSRF protection, and audit
+logging. Search and thumbnails are not yet built.
 
 ## Reverse proxy header login
 
@@ -46,6 +46,27 @@ handle the wire formats natively) and applies sshd's StrictModes checks —
 the user's home dir, `.ssh`, and `authorized_keys` must be owned by that
 user or root and not group/world-writable. Enable it with `auth.ssh_keys:
 true` in the config.
+
+## Share links
+
+From the file browser, select a file or folder and click the share icon to
+create a link (`/share/<token>`), with an optional expiration, password, and
+access mode (view & download / view only / download only). Anyone with the
+link can access it anonymously — it's a capability token, not tied to a
+session. A directory share is scoped to that subtree only: `Sandbox.ResolveWithin`
+re-applies the same symlink-safe resolution as the rest of the sandbox, plus
+an extra check that the resolved path can't climb back out above the shared
+folder. Manage your own links from the "Shared Links" button in the toolbar.
+
+Shares can also be created from the command line:
+```
+nimbusfs share --mode view_only --expires 7d /srv/files/movies/clip.mp4
+```
+The CLI writes directly to the same sqlite database the server uses, so it
+needs the same filesystem access to that database file — in practice this
+means running it as whichever user runs `nimbusfs serve` (typically root),
+e.g. via `sudo`. It does not need to be run on a machine with the server
+actively running.
 
 ## Build
 
