@@ -1,5 +1,7 @@
 # NimbusFS
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > `chmod` is the only access control list you will ever need. Fight us.
 
 A self-contained, Linux-native web file browser. Authentication and
