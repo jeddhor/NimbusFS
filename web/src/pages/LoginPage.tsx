@@ -1,9 +1,9 @@
 import * as React from "react"
 import { motion } from "framer-motion"
-import { FolderLock } from "lucide-react"
 import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Logo, Wordmark } from "@/components/Logo"
 import { SSHLoginPanel } from "@/components/SSHLoginPanel"
 import { api, ApiError } from "@/lib/api"
 
@@ -54,10 +54,8 @@ export function LoginPage() {
         className="glass w-full max-w-sm rounded-2xl p-8 shadow-2xl"
       >
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <FolderLock size={24} />
-          </div>
-          <h1 className="text-lg font-semibold text-foreground">NimbusFS</h1>
+          <Logo size={48} />
+          <Wordmark className="text-2xl" />
           <p className="text-sm text-muted">Sign in with your Linux account</p>
         </div>
 

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/700.css";
 
 @theme {
   --color-background: #0b0c10;
@@ -8,8 +10,10 @@
   --color-foreground: #e6e6ea;
   --color-muted: #8b8d98;
   --color-accent: #7c5cff;
+  --color-accent-2: #22d3ee;
   --color-accent-foreground: #ffffff;
   --color-danger: #ff5c5c;
+  --font-brand: "Space Grotesk", system-ui, sans-serif;
 }
 
 :root {
@@ -28,6 +32,16 @@ body {
   color: var(--color-foreground);
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+.brand-wordmark {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  background-image: linear-gradient(100deg, #a78bfa 0%, var(--color-accent) 45%, var(--color-accent-2) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  letter-spacing: -0.01em;
 }
 
 .glass {

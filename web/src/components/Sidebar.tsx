@@ -1,6 +1,7 @@
-import { CloudCog, LogOut, FolderOpen } from "lucide-react"
+import { LogOut, FolderOpen } from "lucide-react"
 import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
+import { Logo, Wordmark } from "@/components/Logo"
 
 export function Sidebar({ onNavigateRoot }: { onNavigateRoot: () => void }) {
   const { username, logout } = useAuth()
@@ -8,8 +9,8 @@ export function Sidebar({ onNavigateRoot }: { onNavigateRoot: () => void }) {
   return (
     <aside className="glass flex h-full w-60 flex-shrink-0 flex-col rounded-2xl p-4">
       <div className="mb-6 flex items-center gap-2 px-1">
-        <CloudCog className="text-accent" size={22} />
-        <span className="font-semibold text-foreground">NimbusFS</span>
+        <Logo size={24} />
+        <Wordmark className="text-lg" />
       </div>
 
       <button
