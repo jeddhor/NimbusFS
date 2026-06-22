@@ -57,6 +57,21 @@ export const api = {
   me() {
     return request<{ username: string }>("/api/me")
   },
+  authMethods() {
+    return request<{ pam: boolean; sshKeys: boolean }>("/api/auth/methods")
+  },
+  sshStart(username: string) {
+    return request<{ code: string; pollToken: string; expiresIn: number }>("/api/auth/ssh/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    })
+  },
+  sshPoll(pollToken: string) {
+    return request<{ status: "pending" | "approved"; username?: string }>(
+      `/api/auth/ssh/poll?pollToken=${encodeURIComponent(pollToken)}`,
+    )
+  },
   list(path: string) {
     return request<{ path: string; entries: FileEntry[] }>(`/api/files?path=${encodeURIComponent(path)}`)
   },

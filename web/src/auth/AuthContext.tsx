@@ -6,6 +6,7 @@ interface AuthState {
   loading: boolean
   login: (username: string, password: string, remember: boolean) => Promise<void>
   logout: () => Promise<void>
+  setUsername: (username: string) => void
 }
 
 const AuthContext = React.createContext<AuthState | null>(null)
@@ -32,7 +33,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUsername(null)
   }, [])
 
-  return <AuthContext.Provider value={{ username, loading, login, logout }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ username, loading, login, logout, setUsername }}>{children}</AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

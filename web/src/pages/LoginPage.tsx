@@ -4,7 +4,8 @@ import { FolderLock } from "lucide-react"
 import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ApiError } from "@/lib/api"
+import { SSHLoginPanel } from "@/components/SSHLoginPanel"
+import { api, ApiError } from "@/lib/api"
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -13,6 +14,15 @@ export function LoginPage() {
   const [remember, setRemember] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [submitting, setSubmitting] = React.useState(false)
+  const [mode, setMode] = React.useState<"password" | "ssh">("password")
+  const [sshEnabled, setSshEnabled] = React.useState(false)
+
+  React.useEffect(() => {
+    api
+      .authMethods()
+      .then((m) => setSshEnabled(m.sshKeys))
+      .catch(() => setSshEnabled(false))
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,7 +53,7 @@ export function LoginPage() {
           <p className="text-sm text-muted">Sign in with your Linux account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <Input
             placeholder="Username"
             autoFocus
@@ -51,29 +61,49 @@ export function LoginPage() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
-          <Input
-            placeholder="Password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <label className="flex items-center gap-2 text-sm text-muted">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="h-3.5 w-3.5 accent-accent"
-            />
-            Remember me
-          </label>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {mode === "password" ? (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <Input
+                placeholder="Password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <label className="flex items-center gap-2 text-sm text-muted">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-accent"
+                />
+                Remember me
+              </label>
 
-          <Button type="submit" disabled={submitting} className="mt-2 w-full">
-            {submitting ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
+              {error && <p className="text-sm text-danger">{error}</p>}
+
+              <Button type="submit" disabled={submitting} className="mt-1 w-full">
+                {submitting ? "Signing in..." : "Sign in"}
+              </Button>
+            </form>
+          ) : (
+            <SSHLoginPanel username={username} />
+          )}
+
+          {sshEnabled && (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null)
+                setMode(mode === "password" ? "ssh" : "password")
+              }}
+              className="text-xs text-muted underline-offset-2 hover:text-foreground hover:underline"
+            >
+              {mode === "password" ? "Use an SSH key instead" : "Use a password instead"}
+            </button>
+          )}
+        </div>
       </motion.div>
     </div>
   )

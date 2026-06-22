@@ -23,14 +23,24 @@ import (
 )
 
 type API struct {
-	cfg      *config.Config
-	sandbox  *fsops.Sandbox
-	sessions *auth.SessionManager
-	store    *store.Store
+	cfg        *config.Config
+	sandbox    *fsops.Sandbox
+	sessions   *auth.SessionManager
+	store      *store.Store
+	sshDevices *auth.SSHDeviceStore
 }
 
 func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManager, st *store.Store) *API {
-	return &API{cfg: cfg, sandbox: sandbox, sessions: sessions, store: st}
+	return &API{cfg: cfg, sandbox: sandbox, sessions: sessions, store: st, sshDevices: auth.NewSSHDeviceStore()}
+}
+
+// AuthMethods reports which login methods are enabled, so the login page
+// can decide whether to show the SSH-key option without needing auth itself.
+func (a *API) AuthMethods(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]bool{
+		"pam":     a.cfg.Auth.PAM,
+		"sshKeys": a.cfg.Auth.SSHKeys,
+	})
 }
 
 type ctxKey int
