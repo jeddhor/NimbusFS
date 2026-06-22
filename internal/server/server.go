@@ -41,6 +41,10 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 
 // spaHandler serves the embedded SPA build, falling back to index.html for
 // any path that isn't a real asset (client-side routing).
+//
+// The fallback serves index.html's bytes directly rather than delegating to
+// http.FileServer with a rewritten path, since FileServer has a special case
+// that 301-redirects any request resolving to a literal "index.html" to "./".
 func spaHandler(frontend fs.FS) http.Handler {
 	fileServer := http.FileServer(http.FS(frontend))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,14 +53,21 @@ func spaHandler(frontend fs.FS) http.Handler {
 			path = "index.html"
 		}
 		if _, err := fs.Stat(frontend, path); err != nil {
-			r2 := new(http.Request)
-			*r2 = *r
-			r2.URL.Path = "/index.html"
-			fileServer.ServeHTTP(w, r2)
+			serveIndex(w, frontend)
 			return
 		}
 		fileServer.ServeHTTP(w, r)
 	})
+}
+
+func serveIndex(w http.ResponseWriter, frontend fs.FS) {
+	data, err := fs.ReadFile(frontend, "index.html")
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(data)
 }
 
 func withSecurityHeaders(next http.Handler) http.Handler {
