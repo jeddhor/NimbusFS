@@ -104,6 +104,14 @@ export const api = {
     if (download) q.set("download", "1")
     return `/api/file?${q.toString()}`
   },
+  thumbnailUrl(path: string, size?: number) {
+    const q = new URLSearchParams({ path })
+    if (size) q.set("size", String(size))
+    return `/api/thumbnail?${q.toString()}`
+  },
+  search(q: string) {
+    return request<{ entries: FileEntry[]; indexing: boolean }>(`/api/search?q=${encodeURIComponent(q)}`)
+  },
   async upload(destPath: string, files: FileList | File[]) {
     const form = new FormData()
     for (const f of Array.from(files)) {

@@ -7,6 +7,7 @@ import { PreviewModal } from "@/components/PreviewModal"
 import { InputDialog } from "@/components/InputDialog"
 import { ShareDialog } from "@/components/ShareDialog"
 import { SharedLinksDialog } from "@/components/SharedLinksDialog"
+import { SearchBar } from "@/components/SearchBar"
 import { previewKind } from "@/lib/fileIcons"
 import { api, ApiError, type FileEntry } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -32,12 +33,19 @@ export function BrowserPage() {
   const [dialog, setDialog] = React.useState<DialogState>({ kind: "none" })
   const [dragActive, setDragActive] = React.useState(false)
   const [sharingEnabled, setSharingEnabled] = React.useState(false)
+  const [searchEnabled, setSearchEnabled] = React.useState(false)
 
   React.useEffect(() => {
     api
       .features()
-      .then((f) => setSharingEnabled(f.sharing))
-      .catch(() => setSharingEnabled(false))
+      .then((f) => {
+        setSharingEnabled(f.sharing)
+        setSearchEnabled(f.search)
+      })
+      .catch(() => {
+        setSharingEnabled(false)
+        setSearchEnabled(false)
+      })
   }, [])
 
   const refresh = React.useCallback((p: string) => {
@@ -170,7 +178,12 @@ export function BrowserPage() {
       <Sidebar onNavigateRoot={() => navigate("/")} />
 
       <div className="flex flex-1 flex-col gap-3 overflow-hidden">
-        <Breadcrumbs path={path} onNavigate={navigate} />
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <Breadcrumbs path={path} onNavigate={navigate} />
+          </div>
+          {searchEnabled && <SearchBar onNavigate={navigate} onOpen={openEntry} />}
+        </div>
 
         <Toolbar
           viewMode={viewMode}

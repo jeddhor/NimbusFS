@@ -1,7 +1,8 @@
+import * as React from "react"
 import { motion } from "framer-motion"
 import { cn, formatBytes, formatDate } from "@/lib/utils"
-import { FileTypeIcon } from "@/lib/fileIcons"
-import type { FileEntry } from "@/lib/api"
+import { FileTypeIcon, thumbnailable } from "@/lib/fileIcons"
+import { api, type FileEntry } from "@/lib/api"
 import type { ViewMode } from "@/components/Toolbar"
 
 interface FileViewProps {
@@ -10,6 +11,24 @@ interface FileViewProps {
   selected: Set<string>
   onSelect: (path: string, additive: boolean) => void
   onOpen: (entry: FileEntry) => void
+}
+
+function GridThumbnail({ entry }: { entry: FileEntry }) {
+  const [failed, setFailed] = React.useState(false)
+
+  if (entry.isDir || !thumbnailable(entry.name) || failed) {
+    return <FileTypeIcon entry={entry} className="h-10 w-10 text-accent" />
+  }
+
+  return (
+    <img
+      src={api.thumbnailUrl(entry.path)}
+      alt=""
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="h-16 w-16 rounded-md object-cover"
+    />
+  )
 }
 
 export function FileView({ entries, viewMode, selected, onSelect, onOpen }: FileViewProps) {
@@ -32,7 +51,7 @@ export function FileView({ entries, viewMode, selected, onSelect, onOpen }: File
               selected.has(entry.path) ? "ring-2 ring-accent" : "hover:bg-white/5",
             )}
           >
-            <FileTypeIcon entry={entry} className="h-10 w-10 text-accent" />
+            <GridThumbnail entry={entry} />
             <span className="w-full truncate text-xs text-foreground">{entry.name}</span>
           </motion.button>
         ))}

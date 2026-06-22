@@ -5,12 +5,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"time"
 
 	"nimbusfs/internal/auth"
 	"nimbusfs/internal/config"
 	"nimbusfs/internal/fsops"
+	"nimbusfs/internal/search"
 	"nimbusfs/internal/server"
 	"nimbusfs/internal/store"
+	"nimbusfs/internal/thumbnail"
 	"nimbusfs/web"
 )
 
@@ -122,7 +126,14 @@ func cmdServe(args []string) {
 
 	sessions := auth.NewSessionManager(st)
 
-	handler := server.New(cfg, sandbox, sessions, st, web.Dist())
+	searchIndex := search.New(sandbox)
+	if cfg.Search.Enabled {
+		searchIndex.StartPeriodicRebuild(5 * time.Minute)
+	}
+
+	thumbnails := thumbnail.New(filepath.Join(cfg.DataDir, "thumbs"))
+
+	handler := server.New(cfg, sandbox, sessions, st, searchIndex, thumbnails, web.Dist())
 
 	log.Printf("nimbusfs listening on %s (root=%s)", cfg.Server.Listen, sandbox.Root())
 	if err := http.ListenAndServe(cfg.Server.Listen, handler); err != nil {

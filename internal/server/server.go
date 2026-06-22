@@ -10,12 +10,14 @@ import (
 	"nimbusfs/internal/auth"
 	"nimbusfs/internal/config"
 	"nimbusfs/internal/fsops"
+	"nimbusfs/internal/search"
 	"nimbusfs/internal/store"
+	"nimbusfs/internal/thumbnail"
 )
 
 // New builds the full HTTP handler: API routes plus the embedded SPA.
-func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManager, st *store.Store, frontend fs.FS) http.Handler {
-	a := api.New(cfg, sandbox, sessions, st)
+func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManager, st *store.Store, searchIndex *search.Index, thumbnails *thumbnail.Generator, frontend fs.FS) http.Handler {
+	a := api.New(cfg, sandbox, sessions, st, searchIndex, thumbnails)
 	mux := http.NewServeMux()
 
 	// Login is exempt from CSRF since no session/csrf cookie exists yet;
@@ -53,6 +55,10 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 	mux.HandleFunc("POST /api/s/{token}/unlock", a.ShareUnlock)
 	mux.HandleFunc("GET /api/s/{token}/files", a.ShareList)
 	mux.HandleFunc("GET /api/s/{token}/file", a.ShareFile)
+
+	mux.HandleFunc("GET /api/search", a.RequireAuth(a.Search))
+	mux.HandleFunc("POST /api/search/reindex", a.RequireAuth(a.ReindexSearch))
+	mux.HandleFunc("GET /api/thumbnail", a.RequireAuth(a.Thumbnail))
 
 	mux.Handle("/", spaHandler(frontend))
 

@@ -59,6 +59,14 @@ export function FileTypeIcon({ entry, className }: { entry: FileEntry; className
   }
 }
 
+// thumbnailExts mirrors internal/thumbnail's supported extensions exactly —
+// requesting a thumbnail for anything else would just 404.
+const THUMBNAIL_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "mkv", "pdf"])
+
+export function thumbnailable(name: string): boolean {
+  return THUMBNAIL_EXTS.has(extOf(name))
+}
+
 export function previewKind(name: string): "image" | "video" | "audio" | "pdf" | "text" | null {
   const ext = extOf(name)
   if (EXT_GROUPS.image.includes(ext)) return "image"

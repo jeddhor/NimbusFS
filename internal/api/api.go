@@ -19,7 +19,9 @@ import (
 	"nimbusfs/internal/auth"
 	"nimbusfs/internal/config"
 	"nimbusfs/internal/fsops"
+	"nimbusfs/internal/search"
 	"nimbusfs/internal/store"
+	"nimbusfs/internal/thumbnail"
 )
 
 type API struct {
@@ -29,9 +31,11 @@ type API struct {
 	store             *store.Store
 	sshDevices        *auth.SSHDeviceStore
 	shareUnlockSecret []byte
+	searchIndex       *search.Index
+	thumbnails        *thumbnail.Generator
 }
 
-func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManager, st *store.Store) *API {
+func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManager, st *store.Store, searchIndex *search.Index, thumbnails *thumbnail.Generator) *API {
 	secret := make([]byte, 32)
 	_, _ = rand.Read(secret)
 	return &API{
@@ -41,6 +45,8 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 		store:             st,
 		sshDevices:        auth.NewSSHDeviceStore(),
 		shareUnlockSecret: secret,
+		searchIndex:       searchIndex,
+		thumbnails:        thumbnails,
 	}
 }
 

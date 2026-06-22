@@ -21,10 +21,21 @@ func ownerGroup(info os.FileInfo) (owner, group string) {
 	if !ok {
 		return "", ""
 	}
-	return lookupUser(stat.Uid), lookupGroup(stat.Gid)
+	return LookupUserName(stat.Uid), LookupGroupName(stat.Gid)
 }
 
-func lookupUser(uid uint32) string {
+// StatT extracts the raw uid/gid/mode from a FileInfo, for callers (like the
+// search indexer) that need them without going through the Entry/JSON path.
+func StatT(info os.FileInfo) (uid, gid uint32, ok bool) {
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return 0, 0, false
+	}
+	return stat.Uid, stat.Gid, true
+}
+
+// LookupUserName resolves a uid to a username, caching lookups.
+func LookupUserName(uid uint32) string {
 	userCacheMu.Lock()
 	defer userCacheMu.Unlock()
 	if name, ok := userCache[uid]; ok {
@@ -38,7 +49,8 @@ func lookupUser(uid uint32) string {
 	return name
 }
 
-func lookupGroup(gid uint32) string {
+// LookupGroupName resolves a gid to a group name, caching lookups.
+func LookupGroupName(gid uint32) string {
 	userCacheMu.Lock()
 	defer userCacheMu.Unlock()
 	if name, ok := groupCache[gid]; ok {
