@@ -6,11 +6,24 @@ every file operation runs impersonating the authenticated Linux user, so
 real `ls -la` permissions and ownership are the only access control — no
 separate user database to administer.
 
-This is the v1 MVP slice: PAM login, SSH public-key login, sandboxed file
-browsing (list, upload, download, rename, move, copy, delete, create),
-image/video/audio/pdf/text preview, sqlite-backed sessions, CSRF
-protection, and audit logging. Proxy auth, sharing, search, and thumbnails
-are not yet built.
+This is the v1 MVP slice: PAM login, SSH public-key login, reverse-proxy
+header login, sandboxed file browsing (list, upload, download, rename,
+move, copy, delete, create), image/video/audio/pdf/text preview,
+sqlite-backed sessions, CSRF protection, and audit logging. Sharing,
+search, and thumbnails are not yet built.
+
+## Reverse proxy header login
+
+With `auth.proxy_auth: true`, nimbusfs trusts an `X-Remote-User` header set
+by a fronting reverse proxy that's already authenticated the request (e.g.
+Authelia, Keycloak, oauth2-proxy — see `deploy/nginx.conf.example` and
+`deploy/apache.conf.example`). The named account still must be a real Linux
+user, and file access is still governed entirely by that user's real
+permissions. **nimbusfs has no way to verify a request actually passed
+through your proxy** — it's the operator's responsibility to make sure the
+proxy strips any client-supplied `X-Remote-User` before setting its own,
+and that nimbusfs only listens where the proxy can reach it (e.g.
+`127.0.0.1`, per `server.listen`).
 
 ## SSH public key login
 
