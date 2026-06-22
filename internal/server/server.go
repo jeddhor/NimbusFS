@@ -24,6 +24,7 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 	mux.HandleFunc("POST /api/logout", a.RequireAuth(a.RequireCSRF(a.Logout)))
 	mux.HandleFunc("GET /api/me", a.RequireAuth(a.Me))
 	mux.HandleFunc("GET /api/auth/methods", a.AuthMethods)
+	mux.HandleFunc("GET /api/features", a.RequireAuth(a.Features))
 
 	// SSH device-flow endpoints are themselves the authentication mechanism
 	// (like /api/login), so none of them require an existing session or CSRF token.
@@ -41,6 +42,17 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 	mux.HandleFunc("POST /api/rename", a.RequireAuth(a.RequireCSRF(a.Rename)))
 	mux.HandleFunc("POST /api/move", a.RequireAuth(a.RequireCSRF(a.Move)))
 	mux.HandleFunc("POST /api/copy", a.RequireAuth(a.RequireCSRF(a.Copy)))
+
+	mux.HandleFunc("POST /api/shares", a.RequireAuth(a.RequireCSRF(a.CreateShare)))
+	mux.HandleFunc("GET /api/shares", a.RequireAuth(a.ListShares))
+	mux.HandleFunc("DELETE /api/shares/{token}", a.RequireAuth(a.RequireCSRF(a.RevokeShare)))
+
+	// Public share-serving endpoints: anonymous by design (the share token
+	// itself is the credential), so none of these require a session or CSRF.
+	mux.HandleFunc("GET /api/s/{token}/info", a.ShareInfo)
+	mux.HandleFunc("POST /api/s/{token}/unlock", a.ShareUnlock)
+	mux.HandleFunc("GET /api/s/{token}/files", a.ShareList)
+	mux.HandleFunc("GET /api/s/{token}/file", a.ShareFile)
 
 	mux.Handle("/", spaHandler(frontend))
 

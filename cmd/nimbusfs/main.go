@@ -31,6 +31,8 @@ func main() {
 		cmdCheckConfig(os.Args[2:])
 	case "ssh-login":
 		cmdSSHLogin(os.Args[2:])
+	case "share":
+		cmdShare(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 	default:
@@ -48,6 +50,7 @@ Usage:
   nimbusfs init [-config path]          Write a default config file
   nimbusfs check-config [-config path]  Validate a config file
   nimbusfs ssh-login -server url        Complete a browser's SSH-key login using a local key/ssh-agent
+  nimbusfs share [flags] <path>         Create a share link for a file or directory
 `)
 }
 

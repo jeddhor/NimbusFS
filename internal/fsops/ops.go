@@ -29,6 +29,21 @@ func (s *Sandbox) List(reqPath string) ([]Entry, error) {
 	if err != nil {
 		return nil, err
 	}
+	return s.listAbs(abs)
+}
+
+// ListWithin lists a directory like List, but additionally requires the
+// result to stay within scopeReq — used to serve share links scoped to a
+// single subtree rather than the whole sandbox.
+func (s *Sandbox) ListWithin(scopeReq, subPath string) ([]Entry, error) {
+	abs, err := s.ResolveWithin(scopeReq, subPath)
+	if err != nil {
+		return nil, err
+	}
+	return s.listAbs(abs)
+}
+
+func (s *Sandbox) listAbs(abs string) ([]Entry, error) {
 	dirEntries, err := os.ReadDir(abs)
 	if err != nil {
 		return nil, err
@@ -61,6 +76,23 @@ func (s *Sandbox) Stat(reqPath string) (Entry, error) {
 		return Entry{}, err
 	}
 	return entryFromInfo(info.Name(), reqPath, info), nil
+}
+
+// StatWithin is the share-scoped equivalent of Stat.
+func (s *Sandbox) StatWithin(scopeReq, subPath string) (Entry, error) {
+	abs, err := s.ResolveWithin(scopeReq, subPath)
+	if err != nil {
+		return Entry{}, err
+	}
+	info, err := os.Stat(abs)
+	if err != nil {
+		return Entry{}, err
+	}
+	rel, err := s.RelPath(abs)
+	if err != nil {
+		return Entry{}, err
+	}
+	return entryFromInfo(info.Name(), rel, info), nil
 }
 
 // AbsPath resolves a request path to an absolute on-disk path without
@@ -162,6 +194,19 @@ func (s *Sandbox) Open(reqPath string) (*os.File, os.FileInfo, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	return openAbs(abs)
+}
+
+// OpenWithin is the share-scoped equivalent of Open.
+func (s *Sandbox) OpenWithin(scopeReq, subPath string) (*os.File, os.FileInfo, error) {
+	abs, err := s.ResolveWithin(scopeReq, subPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return openAbs(abs)
+}
+
+func openAbs(abs string) (*os.File, os.FileInfo, error) {
 	f, err := os.Open(abs)
 	if err != nil {
 		return nil, nil, err

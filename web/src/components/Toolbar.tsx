@@ -10,6 +10,8 @@ import {
   Trash2,
   LayoutGrid,
   List as ListIcon,
+  Share2,
+  Link2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -28,6 +30,9 @@ interface ToolbarProps {
   onMove: () => void
   onCopy: () => void
   onDelete: () => void
+  onShare: () => void
+  onShowShares: () => void
+  sharingEnabled: boolean
 }
 
 export function Toolbar(props: ToolbarProps) {
@@ -82,6 +87,11 @@ export function Toolbar(props: ToolbarProps) {
               <Button size="sm" variant="ghost" onClick={props.onRename}>
                 <PencilLine size={14} />
               </Button>
+              {props.sharingEnabled && (
+                <Button size="sm" variant="ghost" onClick={props.onShare}>
+                  <Share2 size={14} />
+                </Button>
+              )}
             </>
           )}
           <Button size="sm" variant="ghost" onClick={props.onMove}>
@@ -98,6 +108,12 @@ export function Toolbar(props: ToolbarProps) {
       )}
 
       <div className="ml-auto flex items-center gap-1">
+        {props.sharingEnabled && (
+          <Button size="sm" variant="ghost" onClick={props.onShowShares}>
+            <Link2 size={14} />
+            Shared Links
+          </Button>
+        )}
         <Button
           size="icon"
           variant={props.viewMode === "grid" ? "secondary" : "ghost"}

@@ -1,6 +1,8 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { AuthProvider, useAuth } from "@/auth/AuthContext"
 import { LoginPage } from "@/pages/LoginPage"
 import { BrowserPage } from "@/pages/BrowserPage"
+import { ShareViewPage } from "@/pages/ShareViewPage"
 
 function Gate() {
   const { username, loading } = useAuth()
@@ -14,8 +16,18 @@ function Gate() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Gate />
-    </AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/share/:token" element={<ShareViewPage />} />
+        <Route
+          path="*"
+          element={
+            <AuthProvider>
+              <Gate />
+            </AuthProvider>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   )
 }

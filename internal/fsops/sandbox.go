@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -59,6 +60,25 @@ func (s *Sandbox) Resolve(requestPath string) (string, error) {
 
 	full := filepath.Join(resolved, rest)
 	if !s.within(full) {
+		return "", ErrEscape
+	}
+	return full, nil
+}
+
+// ResolveWithin resolves subPath relative to scopeReq, but additionally
+// requires the result to stay within scopeReq itself — not just the global
+// sandbox root. This is what backs share links: a share only grants access
+// to one subtree, even though the global root underneath it is much bigger.
+func (s *Sandbox) ResolveWithin(scopeReq, subPath string) (string, error) {
+	scopeAbs, err := s.Resolve(scopeReq)
+	if err != nil {
+		return "", err
+	}
+	full, err := s.Resolve(path.Join(scopeReq, subPath))
+	if err != nil {
+		return "", err
+	}
+	if full != scopeAbs && !strings.HasPrefix(full, scopeAbs+string(os.PathSeparator)) {
 		return "", ErrEscape
 	}
 	return full, nil

@@ -5,6 +5,8 @@ import { Toolbar, type ViewMode } from "@/components/Toolbar"
 import { FileView } from "@/components/FileView"
 import { PreviewModal } from "@/components/PreviewModal"
 import { InputDialog } from "@/components/InputDialog"
+import { ShareDialog } from "@/components/ShareDialog"
+import { SharedLinksDialog } from "@/components/SharedLinksDialog"
 import { previewKind } from "@/lib/fileIcons"
 import { api, ApiError, type FileEntry } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -16,6 +18,8 @@ type DialogState =
   | { kind: "rename"; entry: FileEntry }
   | { kind: "move"; paths: string[] }
   | { kind: "copy"; paths: string[] }
+  | { kind: "share"; path: string }
+  | { kind: "sharedLinks" }
 
 export function BrowserPage() {
   const [path, setPath] = React.useState("/")
@@ -27,6 +31,14 @@ export function BrowserPage() {
   const [preview, setPreview] = React.useState<FileEntry | null>(null)
   const [dialog, setDialog] = React.useState<DialogState>({ kind: "none" })
   const [dragActive, setDragActive] = React.useState(false)
+  const [sharingEnabled, setSharingEnabled] = React.useState(false)
+
+  React.useEffect(() => {
+    api
+      .features()
+      .then((f) => setSharingEnabled(f.sharing))
+      .catch(() => setSharingEnabled(false))
+  }, [])
 
   const refresh = React.useCallback((p: string) => {
     setLoading(true)
@@ -176,6 +188,12 @@ export function BrowserPage() {
           onMove={() => setDialog({ kind: "move", paths: [...selected] })}
           onCopy={() => setDialog({ kind: "copy", paths: [...selected] })}
           onDelete={handleDelete}
+          onShare={() => {
+            const p = [...selected][0]
+            if (p) setDialog({ kind: "share", path: p })
+          }}
+          onShowShares={() => setDialog({ kind: "sharedLinks" })}
+          sharingEnabled={sharingEnabled}
         />
 
         {error && <div className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>}
@@ -237,6 +255,12 @@ export function BrowserPage() {
         onClose={() => setDialog({ kind: "none" })}
         onConfirm={handleMoveOrCopyConfirm}
       />
+      <ShareDialog
+        open={dialog.kind === "share"}
+        path={dialog.kind === "share" ? dialog.path : null}
+        onClose={() => setDialog({ kind: "none" })}
+      />
+      <SharedLinksDialog open={dialog.kind === "sharedLinks"} onClose={() => setDialog({ kind: "none" })} />
     </div>
   )
 }

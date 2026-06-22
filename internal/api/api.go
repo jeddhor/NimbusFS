@@ -23,15 +23,34 @@ import (
 )
 
 type API struct {
-	cfg        *config.Config
-	sandbox    *fsops.Sandbox
-	sessions   *auth.SessionManager
-	store      *store.Store
-	sshDevices *auth.SSHDeviceStore
+	cfg               *config.Config
+	sandbox           *fsops.Sandbox
+	sessions          *auth.SessionManager
+	store             *store.Store
+	sshDevices        *auth.SSHDeviceStore
+	shareUnlockSecret []byte
 }
 
 func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManager, st *store.Store) *API {
-	return &API{cfg: cfg, sandbox: sandbox, sessions: sessions, store: st, sshDevices: auth.NewSSHDeviceStore()}
+	secret := make([]byte, 32)
+	_, _ = rand.Read(secret)
+	return &API{
+		cfg:               cfg,
+		sandbox:           sandbox,
+		sessions:          sessions,
+		store:             st,
+		sshDevices:        auth.NewSSHDeviceStore(),
+		shareUnlockSecret: secret,
+	}
+}
+
+// Features reports which optional features are enabled, so the authenticated
+// UI can hide controls (e.g. sharing) the operator has turned off.
+func (a *API) Features(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]bool{
+		"sharing": a.cfg.Sharing.Enabled,
+		"search":  a.cfg.Search.Enabled,
+	})
 }
 
 // AuthMethods reports which login methods are enabled, so the login page
@@ -312,11 +331,7 @@ func (a *API) GetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctype := mime.TypeByExtension(filepath.Ext(reqPath))
-	if ctype == "" {
-		ctype = "application/octet-stream"
-	}
-	w.Header().Set("Content-Type", ctype)
+	w.Header().Set("Content-Type", mimeTypeFor(reqPath))
 	if download {
 		w.Header().Set("Content-Disposition", "attachment; filename=\""+path.Base(reqPath)+"\"")
 	}
@@ -515,6 +530,14 @@ func (a *API) handleSrcDest(w http.ResponseWriter, r *http.Request, action strin
 	}
 	_ = a.store.RecordAudit(username, action, req.Src, clientIP(r), req.Dest)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func mimeTypeFor(name string) string {
+	ctype := mime.TypeByExtension(filepath.Ext(name))
+	if ctype == "" {
+		return "application/octet-stream"
+	}
+	return ctype
 }
 
 func writeFSError(w http.ResponseWriter, err error) {
