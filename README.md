@@ -129,22 +129,21 @@ depends on which auth mode you use:
   `~/.ssh/authorized_keys`) reachable at the same path inside the container
   as out, e.g. bind-mount `/home`.
 
-Example run, using `proxy_auth` (put a reverse proxy that sets
-`X-Remote-User` in front of it — see `deploy/nginx.conf.example`):
+`docker-run.sh` wraps the mounts above and generates a default config (for
+`proxy_auth`, or `pam` with `--pam`) if you don't already have one:
 
 ```
-docker run -d --name nimbusfs -p 8080:8080 \
-  -v ./config.yaml:/etc/nimbusfs/config.yaml:ro \
-  -v /srv/files:/srv/files \
-  -v nimbusfs-data:/var/lib/nimbusfs \
-  -v /etc/passwd:/etc/passwd:ro \
-  -v /etc/group:/etc/group:ro \
-  nimbusfs
+./docker-run.sh --fileserver-root="/srv/files"
+./docker-run.sh --fileserver-root="/srv/files" --pam --port=9000
 ```
 
-Make sure `config.yaml`'s `server.listen` binds `0.0.0.0` (e.g.
-`0.0.0.0:8080`), not `127.0.0.1` — the default from `nimbusfs init` won't
-be reachable from outside the container.
+Run it with `--help` for the rest of the flags (`--data-dir`, `--config`,
+`--name`, `--image`, `--foreground`). If you'd rather invoke `docker run`
+directly, put a reverse proxy that sets `X-Remote-User` in front of it
+(`proxy_auth`; see `deploy/nginx.conf.example`) and make sure
+`config.yaml`'s `server.listen` binds `0.0.0.0` (e.g. `0.0.0.0:8080`), not
+`127.0.0.1` — the default from `nimbusfs init` won't be reachable from
+outside the container.
 
 ## Build
 
