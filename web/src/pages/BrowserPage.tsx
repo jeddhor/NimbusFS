@@ -1,9 +1,11 @@
 import * as React from "react"
+import { Eye, Download, FolderOpen, PencilLine, Move, Copy, Share2, Trash2, FolderPlus, FilePlus } from "lucide-react"
 import { Sidebar } from "@/components/Sidebar"
 import { Breadcrumbs } from "@/components/Breadcrumbs"
 import { Toolbar, type ViewMode } from "@/components/Toolbar"
 import { FileView } from "@/components/FileView"
-import { PreviewModal } from "@/components/PreviewModal"
+import { PreviewPane } from "@/components/PreviewPane"
+import { ContextMenu, type ContextMenuEntry } from "@/components/ui/context-menu"
 import { InputDialog } from "@/components/InputDialog"
 import { ShareDialog } from "@/components/ShareDialog"
 import { SharedLinksDialog } from "@/components/SharedLinksDialog"
@@ -22,6 +24,12 @@ type DialogState =
   | { kind: "share"; path: string }
   | { kind: "sharedLinks" }
 
+interface ContextMenuState {
+  x: number
+  y: number
+  entry: FileEntry | null
+}
+
 export function BrowserPage() {
   const [path, setPath] = React.useState("/")
   const [entries, setEntries] = React.useState<FileEntry[]>([])
@@ -31,6 +39,7 @@ export function BrowserPage() {
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
   const [preview, setPreview] = React.useState<FileEntry | null>(null)
   const [dialog, setDialog] = React.useState<DialogState>({ kind: "none" })
+  const [contextMenu, setContextMenu] = React.useState<ContextMenuState | null>(null)
   const [dragActive, setDragActive] = React.useState(false)
   const [sharingEnabled, setSharingEnabled] = React.useState(false)
   const [searchEnabled, setSearchEnabled] = React.useState(false)
@@ -161,6 +170,60 @@ export function BrowserPage() {
     }
   }
 
+  function handleContextMenu(entry: FileEntry | null, e: React.MouseEvent) {
+    if (!entry) {
+      setSelected(new Set())
+    } else if (!selected.has(entry.path)) {
+      setSelected(new Set([entry.path]))
+    }
+    setContextMenu({ x: e.clientX, y: e.clientY, entry })
+  }
+
+  function buildContextMenuItems(entry: FileEntry | null): ContextMenuEntry[] {
+    if (!entry) {
+      return [
+        { label: "New Folder", icon: <FolderPlus size={14} />, onClick: () => setDialog({ kind: "newFolder" }) },
+        { label: "New File", icon: <FilePlus size={14} />, onClick: () => setDialog({ kind: "newFile" }) },
+      ]
+    }
+
+    const count = selected.size || 1
+    const items: ContextMenuEntry[] = []
+
+    if (count <= 1) {
+      if (entry.isDir) {
+        items.push({ label: "Open", icon: <FolderOpen size={14} />, onClick: () => navigate(entry.path) })
+      } else {
+        if (previewKind(entry.name)) {
+          items.push({ label: "Preview", icon: <Eye size={14} />, onClick: () => setPreview(entry) })
+        }
+        items.push({
+          label: "Download",
+          icon: <Download size={14} />,
+          onClick: () => {
+            window.location.href = api.fileUrl(entry.path, true)
+          },
+        })
+      }
+      items.push({ separator: true })
+      items.push({ label: "Rename", icon: <PencilLine size={14} />, onClick: () => setDialog({ kind: "rename", entry }) })
+    }
+
+    items.push({ label: "Move", icon: <Move size={14} />, onClick: () => setDialog({ kind: "move", paths: [...selected] }) })
+    items.push({ label: "Copy", icon: <Copy size={14} />, onClick: () => setDialog({ kind: "copy", paths: [...selected] }) })
+    if (sharingEnabled && count <= 1) {
+      items.push({ label: "Share", icon: <Share2 size={14} />, onClick: () => setDialog({ kind: "share", path: entry.path }) })
+    }
+    items.push({ separator: true })
+    items.push({
+      label: count > 1 ? `Delete ${count} items` : "Delete",
+      icon: <Trash2 size={14} />,
+      danger: true,
+      onClick: handleDelete,
+    })
+    return items
+  }
+
   return (
     <div
       className="flex h-full w-full gap-4 p-4"
@@ -220,12 +283,28 @@ export function BrowserPage() {
           {loading ? (
             <div className="flex flex-1 items-center justify-center text-sm text-muted">Loading...</div>
           ) : (
-            <FileView entries={entries} viewMode={viewMode} selected={selected} onSelect={toggleSelect} onOpen={openEntry} />
+            <FileView
+              entries={entries}
+              viewMode={viewMode}
+              selected={selected}
+              onSelect={toggleSelect}
+              onOpen={openEntry}
+              onContextMenu={handleContextMenu}
+            />
           )}
         </div>
       </div>
 
-      <PreviewModal entry={preview} onClose={() => setPreview(null)} />
+      <PreviewPane entry={preview} onClose={() => setPreview(null)} />
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={buildContextMenuItems(contextMenu.entry)}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
 
       <InputDialog
         open={dialog.kind === "newFolder"}

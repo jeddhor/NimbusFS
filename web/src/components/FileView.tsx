@@ -11,6 +11,7 @@ interface FileViewProps {
   selected: Set<string>
   onSelect: (path: string, additive: boolean) => void
   onOpen: (entry: FileEntry) => void
+  onContextMenu: (entry: FileEntry | null, e: React.MouseEvent) => void
 }
 
 function GridThumbnail({ entry }: { entry: FileEntry }) {
@@ -31,20 +32,41 @@ function GridThumbnail({ entry }: { entry: FileEntry }) {
   )
 }
 
-export function FileView({ entries, viewMode, selected, onSelect, onOpen }: FileViewProps) {
+export function FileView({ entries, viewMode, selected, onSelect, onOpen, onContextMenu }: FileViewProps) {
   if (entries.length === 0) {
-    return <div className="flex flex-1 items-center justify-center text-sm text-muted">This folder is empty</div>
+    return (
+      <div
+        className="flex flex-1 items-center justify-center text-sm text-muted"
+        onContextMenu={(e) => {
+          e.preventDefault()
+          onContextMenu(null, e)
+        }}
+      >
+        This folder is empty
+      </div>
+    )
   }
 
   if (viewMode === "grid") {
     return (
-      <div className="grid grid-cols-2 gap-3 overflow-auto p-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div
+        className="grid grid-cols-2 gap-3 overflow-auto p-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+        onContextMenu={(e) => {
+          e.preventDefault()
+          onContextMenu(null, e)
+        }}
+      >
         {entries.map((entry) => (
           <motion.button
             key={entry.path}
             layout
             onClick={(e) => onSelect(entry.path, e.metaKey || e.ctrlKey || e.shiftKey)}
             onDoubleClick={() => onOpen(entry)}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onContextMenu(entry, e)
+            }}
             whileHover={{ y: -2 }}
             className={cn(
               "glass flex flex-col items-center gap-2 rounded-xl p-4 text-center transition-colors",
@@ -60,7 +82,13 @@ export function FileView({ entries, viewMode, selected, onSelect, onOpen }: File
   }
 
   return (
-    <div className="glass flex-1 overflow-auto rounded-xl">
+    <div
+      className="glass flex-1 overflow-auto rounded-xl"
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onContextMenu(null, e)
+      }}
+    >
       <table className="w-full text-left text-sm">
         <thead className="sticky top-0 bg-surface/80 text-xs uppercase text-muted backdrop-blur">
           <tr>
@@ -76,6 +104,11 @@ export function FileView({ entries, viewMode, selected, onSelect, onOpen }: File
               key={entry.path}
               onClick={(e) => onSelect(entry.path, e.metaKey || e.ctrlKey || e.shiftKey)}
               onDoubleClick={() => onOpen(entry)}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onContextMenu(entry, e)
+              }}
               className={cn(
                 "cursor-pointer border-t border-border transition-colors",
                 selected.has(entry.path) ? "bg-accent/15" : "hover:bg-white/5",
