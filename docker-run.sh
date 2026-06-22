@@ -27,10 +27,12 @@ Options:
   --port=PORT         Host port to publish. (default: 8080)
   --name=NAME         Container name. (default: nimbusfs)
   --image=IMAGE       Image tag to run. (default: nimbusfs)
-  --pam               Generate a PAM-auth config instead of proxy_auth,
-                      and bind-mount /etc/passwd, /etc/group, /etc/shadow,
-                      /etc/pam.d read-only. Only affects a freshly
-                      generated config.
+  --pam               Generate a PAM-auth config instead of proxy_auth.
+                      Only affects a freshly generated config — the host's
+                      /etc/passwd, /etc/group, /etc/shadow, and /etc/pam.d
+                      are always bind-mounted read-only (harmless if PAM
+                      auth ends up disabled in config.yaml; needed if it's
+                      ever turned on later without re-running this script).
   --foreground        Run attached instead of detached.
 
 See the "Docker" section in README.md for auth-mode tradeoffs in a container.
@@ -116,23 +118,18 @@ docker_args=(
     -v "${CONFIG_PATH}:/etc/nimbusfs/config.yaml:ro"
     -v "${FILESERVER_ROOT}:/srv/files"
     -v "${DATA_DIR}:/var/lib/nimbusfs"
+    # Always mounted, regardless of --pam: /etc/passwd and /etc/group make
+    # file ownership show real host usernames instead of bare uids even
+    # under proxy_auth/ssh_keys, and /etc/shadow + /etc/pam.d are needed the
+    # moment auth.pam is true in config.yaml. Recreating the container
+    # without these (e.g. a plain `docker run` after `docker rm`, omitting
+    # --pam) is what silently breaks PAM login against the image's own
+    # bundled shadow database instead of the host's.
+    -v /etc/passwd:/etc/passwd:ro
+    -v /etc/group:/etc/group:ro
+    -v /etc/shadow:/etc/shadow:ro
+    -v /etc/pam.d:/etc/pam.d:ro
 )
-
-if [[ "$USE_PAM" == true ]]; then
-    docker_args+=(
-        -v /etc/passwd:/etc/passwd:ro
-        -v /etc/group:/etc/group:ro
-        -v /etc/shadow:/etc/shadow:ro
-        -v /etc/pam.d:/etc/pam.d:ro
-    )
-else
-    # Not strictly required, but without it file ownership shows numeric
-    # uids instead of the host's real usernames.
-    docker_args+=(
-        -v /etc/passwd:/etc/passwd:ro
-        -v /etc/group:/etc/group:ro
-    )
-fi
 
 if [[ "$DETACH" == true ]]; then
     docker_args=(-d "${docker_args[@]}")

@@ -145,8 +145,12 @@ depends on which auth mode you use:
   `~/.ssh/authorized_keys`) reachable at the same path inside the container
   as out, e.g. bind-mount `/home`.
 
-`docker-run.sh` wraps the mounts above and generates a default config (for
-`proxy_auth`, or `pam` with `--pam`) if you don't already have one:
+`docker-run.sh` always bind-mounts `/etc/passwd`, `/etc/group`, `/etc/shadow`,
+and `/etc/pam.d` (harmless if `auth.pam` ends up false in config.yaml, and
+means flipping `auth.pam` on later doesn't require recreating the container
+with different mounts — only a config change and a restart). It generates a
+default config (for `proxy_auth`, or `pam` with `--pam`) if you don't already
+have one:
 
 ```
 ./docker-run.sh --fileserver-root="/srv/files"
