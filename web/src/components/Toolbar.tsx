@@ -81,26 +81,26 @@ export function Toolbar(props: ToolbarProps) {
         <>
           {props.selectedCount === 1 && (
             <>
-              <Button size="sm" variant="ghost" onClick={props.onDownload}>
+              <Button size="sm" variant="ghost" onClick={props.onDownload} title="Download">
                 <Download size={14} />
               </Button>
-              <Button size="sm" variant="ghost" onClick={props.onRename}>
+              <Button size="sm" variant="ghost" onClick={props.onRename} title="Rename">
                 <PencilLine size={14} />
               </Button>
               {props.sharingEnabled && (
-                <Button size="sm" variant="ghost" onClick={props.onShare}>
+                <Button size="sm" variant="ghost" onClick={props.onShare} title="Share">
                   <Share2 size={14} />
                 </Button>
               )}
             </>
           )}
-          <Button size="sm" variant="ghost" onClick={props.onMove}>
+          <Button size="sm" variant="ghost" onClick={props.onMove} title="Move">
             <Move size={14} />
           </Button>
-          <Button size="sm" variant="ghost" onClick={props.onCopy}>
+          <Button size="sm" variant="ghost" onClick={props.onCopy} title="Copy">
             <Copy size={14} />
           </Button>
-          <Button size="sm" variant="destructive" onClick={props.onDelete}>
+          <Button size="sm" variant="destructive" onClick={props.onDelete} title="Delete">
             <Trash2 size={14} />
           </Button>
           <span className="text-xs text-muted">{props.selectedCount} selected</span>
@@ -118,6 +118,7 @@ export function Toolbar(props: ToolbarProps) {
           size="icon"
           variant={props.viewMode === "grid" ? "secondary" : "ghost"}
           onClick={() => props.onViewModeChange("grid")}
+          title="Grid view"
         >
           <LayoutGrid size={16} />
         </Button>
@@ -125,6 +126,7 @@ export function Toolbar(props: ToolbarProps) {
           size="icon"
           variant={props.viewMode === "list" ? "secondary" : "ghost"}
           onClick={() => props.onViewModeChange("list")}
+          title="List view"
         >
           <ListIcon size={16} />
         </Button>
