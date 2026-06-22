@@ -6,11 +6,12 @@ every file operation runs impersonating the authenticated Linux user, so
 real `ls -la` permissions and ownership are the only access control — no
 separate user database to administer.
 
-This is the v1 MVP slice: PAM login, SSH public-key login, reverse-proxy
+This is the full v1 slice: PAM login, SSH public-key login, reverse-proxy
 header login, sandboxed file browsing (list, upload, download, rename,
 move, copy, delete, create), image/video/audio/pdf/text preview,
-temporary share links, sqlite-backed sessions, CSRF protection, and audit
-logging. Search and thumbnails are not yet built.
+temporary share links, indexed search, thumbnails, sqlite-backed
+sessions, CSRF protection, and audit logging. Stretch goals from the
+original spec (WebDAV, SFTP browsing, in-browser editing, etc.) aren't built.
 
 ## Reverse proxy header login
 
@@ -67,6 +68,39 @@ needs the same filesystem access to that database file — in practice this
 means running it as whichever user runs `nimbusfs serve` (typically root),
 e.g. via `sudo`. It does not need to be run on a machine with the server
 actively running.
+
+## Search
+
+With `search.enabled: true`, an in-memory index is built at startup and
+rebuilt every 5 minutes (or on demand via `POST /api/search/reindex`).
+Type into the search bar next to the breadcrumbs for instant filename
+filtering; wildcards work too (`*.pdf`, `report_202?.csv`).
+
+This is a performance tradeoff worth knowing about: checking every search
+hit against the real kernel permission model (the way every other
+operation in nimbusfs works) would mean one impersonated syscall per
+candidate file, which doesn't scale to the "100,000 files" target. Instead,
+owner/group/mode bits are captured into the index at index time and
+checked in Go (`fsops.CanRead`) — standard Unix owner/group/other
+semantics, but not ACLs, and not parent-directory traversal permission.
+Actually opening a result still goes through the real sandboxed,
+impersonated path, so this can't grant access the kernel wouldn't — at
+worst a stale/ACL-only-permitted result could show up and then 403 when
+opened, or a result an ACL would allow could be hidden.
+
+## Thumbnails
+
+jpg/png/gif/webp thumbnails are generated in pure Go (decode, resize,
+re-encode as JPEG) and cached on disk under `<data_dir>/thumbs`, keyed by
+path + size + mtime so they invalidate automatically when a file changes.
+
+mp4 and pdf thumbnails are opportunistic: if `ffmpeg`/`pdftoppm` are found
+on PATH at startup they're used to grab a frame/page, otherwise those
+types just show a generic icon instead — no hard dependency, no cgo, and
+the binary still works the same either way. When used, both tools run as a
+real dropped-privilege subprocess (their actual uid/gid set to the
+requesting Linux user, not just the fsuid trick used elsewhere) so they
+can't read anything that user couldn't read directly themselves.
 
 ## Build
 
