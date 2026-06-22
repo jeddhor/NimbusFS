@@ -1,0 +1,6 @@
+.git
+nimbusfs
+web/node_modules
+web/dist
+*.db
+*.db-journal

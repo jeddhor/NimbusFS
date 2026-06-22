@@ -102,6 +102,50 @@ real dropped-privilege subprocess (their actual uid/gid set to the
 requesting Linux user, not just the fsuid trick used elsewhere) so they
 can't read anything that user couldn't read directly themselves.
 
+## Docker
+
+```
+docker build -t nimbusfs .
+# or, for a much smaller image (~170MB vs ~820MB) with no video/PDF thumbnails:
+docker build -t nimbusfs --build-arg WITH_THUMBNAIL_TOOLS=false .
+```
+
+The container runs as root by design (see the Dockerfile comment — same
+reason `nimbusfs serve` needs root outside a container). What you mount in
+depends on which auth mode you use:
+
+- **`auth.proxy_auth`** is the simplest fit for a container: it only needs
+  the named accounts to resolve via `/etc/passwd`/`/etc/group`. If you want
+  file ownership to show real host usernames (rather than bare uids) and
+  permissions to match a host-side directory you're bind-mounting in,
+  bind-mount the host's `/etc/passwd` and `/etc/group` read-only; otherwise
+  the container's own (minimal, Debian-base) user database is used instead.
+- **`auth.pam`** additionally needs the container to share the host's PAM
+  stack and shadow database: bind-mount `/etc/shadow`, `/etc/pam.d`, and
+  whatever PAM modules your `/etc/pam.d/nimbusfs` stack pulls in — at that
+  point you're largely running the host's auth inside the container, which
+  is a fair bit of coupling to take on just for a container boundary.
+- **`auth.ssh_keys`** needs each user's home directory (specifically
+  `~/.ssh/authorized_keys`) reachable at the same path inside the container
+  as out, e.g. bind-mount `/home`.
+
+Example run, using `proxy_auth` (put a reverse proxy that sets
+`X-Remote-User` in front of it — see `deploy/nginx.conf.example`):
+
+```
+docker run -d --name nimbusfs -p 8080:8080 \
+  -v ./config.yaml:/etc/nimbusfs/config.yaml:ro \
+  -v /srv/files:/srv/files \
+  -v nimbusfs-data:/var/lib/nimbusfs \
+  -v /etc/passwd:/etc/passwd:ro \
+  -v /etc/group:/etc/group:ro \
+  nimbusfs
+```
+
+Make sure `config.yaml`'s `server.listen` binds `0.0.0.0` (e.g.
+`0.0.0.0:8080`), not `127.0.0.1` — the default from `nimbusfs init` won't
+be reachable from outside the container.
+
 ## Build
 
 Requires Go 1.25+, Node 20+, and `libpam0g-dev` (or equivalent) for cgo.
