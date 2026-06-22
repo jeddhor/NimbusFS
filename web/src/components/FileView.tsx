@@ -9,7 +9,7 @@ interface FileViewProps {
   entries: FileEntry[]
   viewMode: ViewMode
   selected: Set<string>
-  onSelect: (path: string, additive: boolean) => void
+  onSelect: (entry: FileEntry, index: number, e: React.MouseEvent) => void
   onOpen: (entry: FileEntry) => void
   onContextMenu: (entry: FileEntry | null, e: React.MouseEvent) => void
 }
@@ -56,11 +56,11 @@ export function FileView({ entries, viewMode, selected, onSelect, onOpen, onCont
           onContextMenu(null, e)
         }}
       >
-        {entries.map((entry) => (
+        {entries.map((entry, index) => (
           <motion.button
             key={entry.path}
             layout
-            onClick={(e) => onSelect(entry.path, e.metaKey || e.ctrlKey || e.shiftKey)}
+            onClick={(e) => onSelect(entry, index, e)}
             onDoubleClick={() => onOpen(entry)}
             onContextMenu={(e) => {
               e.preventDefault()
@@ -99,10 +99,10 @@ export function FileView({ entries, viewMode, selected, onSelect, onOpen, onCont
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry) => (
+          {entries.map((entry, index) => (
             <tr
               key={entry.path}
-              onClick={(e) => onSelect(entry.path, e.metaKey || e.ctrlKey || e.shiftKey)}
+              onClick={(e) => onSelect(entry, index, e)}
               onDoubleClick={() => onOpen(entry)}
               onContextMenu={(e) => {
                 e.preventDefault()

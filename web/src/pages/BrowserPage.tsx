@@ -40,6 +40,7 @@ export function BrowserPage() {
   const [preview, setPreview] = React.useState<FileEntry | null>(null)
   const [dialog, setDialog] = React.useState<DialogState>({ kind: "none" })
   const [contextMenu, setContextMenu] = React.useState<ContextMenuState | null>(null)
+  const [anchorIndex, setAnchorIndex] = React.useState<number | null>(null)
   const [dragActive, setDragActive] = React.useState(false)
   const [sharingEnabled, setSharingEnabled] = React.useState(false)
   const [searchEnabled, setSearchEnabled] = React.useState(false)
@@ -65,6 +66,7 @@ export function BrowserPage() {
       .then((res) => {
         setEntries(res.entries)
         setSelected(new Set())
+        setAnchorIndex(null)
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load directory"))
       .finally(() => setLoading(false))
@@ -90,13 +92,20 @@ export function BrowserPage() {
     }
   }
 
-  function toggleSelect(p: string, additive: boolean) {
+  function toggleSelect(entry: FileEntry, index: number, e: React.MouseEvent) {
+    if (e.shiftKey && anchorIndex !== null) {
+      const [start, end] = anchorIndex < index ? [anchorIndex, index] : [index, anchorIndex]
+      setSelected(new Set(entries.slice(start, end + 1).map((en) => en.path)))
+      return
+    }
+    const additive = e.metaKey || e.ctrlKey
     setSelected((prev) => {
       const next = additive ? new Set(prev) : new Set<string>()
-      if (next.has(p)) next.delete(p)
-      else next.add(p)
+      if (next.has(entry.path)) next.delete(entry.path)
+      else next.add(entry.path)
       return next
     })
+    setAnchorIndex(index)
   }
 
   async function handleUpload(files: FileList) {
