@@ -1,17 +1,33 @@
 # NimbusFS
 
+> `chmod` is the only access control list you will ever need. Fight us.
+
 A self-contained, Linux-native web file browser. Authentication and
 authorization are both delegated to the host: login goes through PAM, and
 every file operation runs impersonating the authenticated Linux user, so
 real `ls -la` permissions and ownership are the only access control — no
 separate user database to administer.
 
+This exists because every other self-hosted file browser eventually asks
+you to create an account, at which point you now have *two* sources of
+truth for "who is allowed to see grandma's vacation photos": Linux, and
+whatever SQL table the app bolted on top of it. NimbusFS just asks the
+kernel. The kernel has had forty years to get this right and is frankly
+tired of being second-guessed by a web app.
+
+(`setfsuid(2)` is also doing some genuinely unglamorous, thankless work
+here so that "impersonate the logged-in user for this one syscall, then
+immediately go back to being root" doesn't turn into a privilege-escalation
+fable. Go check `internal/fsops/identity.go` if you like that sort of
+thing. We did say "nerdy.")
+
 This is the full v1 slice: PAM login, SSH public-key login, reverse-proxy
 header login, sandboxed file browsing (list, upload, download, rename,
 move, copy, delete, create), image/video/audio/pdf/text preview,
 temporary share links, indexed search, thumbnails, sqlite-backed
 sessions, CSRF protection, and audit logging. Stretch goals from the
-original spec (WebDAV, SFTP browsing, in-browser editing, etc.) aren't built.
+original spec (WebDAV, SFTP browsing, in-browser editing, etc.) aren't
+built — they remain, as the kids say, a future-us problem.
 
 ## Reverse proxy header login
 
@@ -176,3 +192,9 @@ sudo ./nimbusfs serve                 # start the server
 See `internal/config/config.go` for the full schema; matches the
 `server` / `filesystem` / `auth` / `sharing` / `search` / `ui` keys from
 the original spec.
+
+---
+
+*No file metadata was harmed — or even copied — in the making of this
+search index. No passwords were stored, ever, anywhere, on purpose. If
+you find a bug, it's a feature that hasn't finished onboarding. Ship it.*
