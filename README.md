@@ -6,10 +6,33 @@ every file operation runs impersonating the authenticated Linux user, so
 real `ls -la` permissions and ownership are the only access control — no
 separate user database to administer.
 
-This is the v1 MVP slice: PAM login, sandboxed file browsing (list, upload,
-download, rename, move, copy, delete, create), image/video/audio/pdf/text
-preview, sqlite-backed sessions, CSRF protection, and audit logging.
-SSH-key auth, proxy auth, sharing, search, and thumbnails are not yet built.
+This is the v1 MVP slice: PAM login, SSH public-key login, sandboxed file
+browsing (list, upload, download, rename, move, copy, delete, create),
+image/video/audio/pdf/text preview, sqlite-backed sessions, CSRF
+protection, and audit logging. Proxy auth, sharing, search, and thumbnails
+are not yet built.
+
+## SSH public key login
+
+Browsers can't read or sign with an arbitrary local SSH key, so this isn't
+literal in-browser WebAuthn — it's a device flow like `gh auth login`:
+
+1. On the login page, enter your username and click "Sign in with SSH key".
+   The browser shows a short code.
+2. On the machine holding your key, run:
+   ```
+   nimbusfs ssh-login --server https://your-server --code <code>
+   ```
+   It signs the challenge via your running `ssh-agent` (or `-key
+   /path/to/key` for a specific file) and submits it.
+3. The browser tab polling in the background picks up the approval and logs in.
+
+The server verifies the signature against `~/.ssh/authorized_keys` for that
+account (ed25519/RSA/ECDSA all work, since Go's `ssh.Signer`/`PublicKey`
+handle the wire formats natively) and applies sshd's StrictModes checks —
+the user's home dir, `.ssh`, and `authorized_keys` must be owned by that
+user or root and not group/world-writable. Enable it with `auth.ssh_keys:
+true` in the config.
 
 ## Build
 
