@@ -1,0 +1,15 @@
+# Example Apache config for fronting nimbusfs with proxy-based auth.
+# Requires mod_proxy, mod_proxy_http, mod_headers, and whatever module
+# performs the actual authentication (mod_auth_openidc, mod_authnz_ldap, etc).
+<VirtualHost *:443>
+    ServerName files.example.com
+
+    # Your auth module sets REMOTE_USER after validating the request.
+    RequestHeader set X-Remote-User %{REMOTE_USER}s
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Host %{HTTP_HOST}e
+
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
+</VirtualHost>

@@ -58,7 +58,7 @@ export const api = {
     return request<{ username: string }>("/api/me")
   },
   authMethods() {
-    return request<{ pam: boolean; sshKeys: boolean }>("/api/auth/methods")
+    return request<{ pam: boolean; sshKeys: boolean; proxyAuth: boolean }>("/api/auth/methods")
   },
   sshStart(username: string) {
     return request<{ code: string; pollToken: string; expiresIn: number }>("/api/auth/ssh/start", {

@@ -38,8 +38,9 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 // can decide whether to show the SSH-key option without needing auth itself.
 func (a *API) AuthMethods(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{
-		"pam":     a.cfg.Auth.PAM,
-		"sshKeys": a.cfg.Auth.SSHKeys,
+		"pam":       a.cfg.Auth.PAM,
+		"sshKeys":   a.cfg.Auth.SSHKeys,
+		"proxyAuth": a.cfg.Auth.ProxyAuth,
 	})
 }
 
@@ -97,6 +98,10 @@ type loginRequest struct {
 const maxLoginAttemptsPerMinute = 5
 
 func (a *API) Login(w http.ResponseWriter, r *http.Request) {
+	if !a.cfg.Auth.PAM {
+		writeError(w, http.StatusNotFound, "password login is disabled")
+		return
+	}
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -174,6 +179,17 @@ func setCSRFCookie(w http.ResponseWriter, secure bool) {
 	})
 }
 
+// ensureCSRFCookie sets a CSRF cookie if the request doesn't already carry
+// one. Password/SSH login set it explicitly on success; proxy-authenticated
+// requests never go through a login endpoint, so it's bootstrapped here on
+// the first authenticated request instead.
+func ensureCSRFCookie(w http.ResponseWriter, r *http.Request, secure bool) {
+	if c, err := r.Cookie(csrfCookieName); err == nil && c.Value != "" {
+		return
+	}
+	setCSRFCookie(w, secure)
+}
+
 func (a *API) RequireCSRF(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -194,8 +210,29 @@ func (a *API) RequireCSRF(next http.HandlerFunc) http.HandlerFunc {
 
 // ---- Auth middleware ----
 
+// proxyAuthHeader is the header a trusted reverse proxy (Authelia, Keycloak,
+// oauth2-proxy, etc.) sets after it has already authenticated the request.
+// nimbusfs only trusts it when auth.proxy_auth is enabled; the operator is
+// responsible for making sure their proxy strips any client-supplied copy
+// of this header before setting their own — nimbusfs has no way to verify
+// a request actually passed through the proxy rather than around it.
+const proxyAuthHeader = "X-Remote-User"
+
 func (a *API) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if a.cfg.Auth.ProxyAuth {
+			if username := r.Header.Get(proxyAuthHeader); username != "" {
+				if _, err := fsops.LookupIdentity(username); err != nil {
+					writeError(w, http.StatusUnauthorized, "unknown system user")
+					return
+				}
+				secure := r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+				ensureCSRFCookie(w, r, secure)
+				next(w, r.WithContext(withUsername(r.Context(), username)))
+				return
+			}
+		}
+
 		c, err := r.Cookie(auth.CookieName)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "not authenticated")
