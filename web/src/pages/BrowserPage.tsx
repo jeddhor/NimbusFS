@@ -55,6 +55,11 @@ export function BrowserPage() {
     return list
   }, [entries, showHidden, foldersFirst])
 
+  const selectedEntries = React.useMemo(
+    () => entries.filter((e) => selected.has(e.path)),
+    [entries, selected],
+  )
+
   React.useEffect(() => {
     api
       .features()
@@ -257,7 +262,7 @@ export function BrowserPage() {
         if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files)
       }}
     >
-      <Sidebar />
+      <Sidebar selectedEntries={selectedEntries} />
 
       <div className="flex flex-1 flex-col gap-3 overflow-hidden">
         <div className="flex items-center gap-3">
