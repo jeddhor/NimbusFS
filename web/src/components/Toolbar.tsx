@@ -33,6 +33,10 @@ interface ToolbarProps {
   onShare: () => void
   onShowShares: () => void
   sharingEnabled: boolean
+  showHidden: boolean
+  onShowHiddenChange: (v: boolean) => void
+  foldersFirst: boolean
+  onFoldersFirstChange: (v: boolean) => void
 }
 
 export function Toolbar(props: ToolbarProps) {
@@ -107,7 +111,28 @@ export function Toolbar(props: ToolbarProps) {
         </>
       )}
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-3">
+        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted select-none">
+          <input
+            type="checkbox"
+            checked={props.showHidden}
+            onChange={(e) => props.onShowHiddenChange(e.target.checked)}
+            className="h-3.5 w-3.5 accent-accent"
+          />
+          Show Hidden Files
+        </label>
+        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted select-none">
+          <input
+            type="checkbox"
+            checked={props.foldersFirst}
+            onChange={(e) => props.onFoldersFirstChange(e.target.checked)}
+            className="h-3.5 w-3.5 accent-accent"
+          />
+          Folders First
+        </label>
+
+        <div className="h-5 w-px bg-border" />
+
         {props.sharingEnabled && (
           <Button size="sm" variant="ghost" onClick={props.onShowShares}>
             <Link2 size={14} />

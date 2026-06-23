@@ -268,6 +268,12 @@ func (a *API) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 			writeError(w, http.StatusUnauthorized, "session expired")
 			return
 		}
+		// The CSRF cookie is intentionally session-only (cleared when the
+		// browser closes), but a "remember me" session cookie can outlive it
+		// by weeks. Re-issue it here if missing so a long-lived session
+		// doesn't end up permanently unable to pass CSRF checks.
+		secure := r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+		ensureCSRFCookie(w, r, secure)
 		ctx := r.Context()
 		ctx = withUsername(ctx, username)
 		next(w, r.WithContext(ctx))

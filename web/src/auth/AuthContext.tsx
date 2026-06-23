@@ -29,8 +29,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = React.useCallback(async () => {
-    await api.logout()
-    setUsername(null)
+    try {
+      await api.logout()
+    } finally {
+      // Always drop client-side auth state, even if the request failed
+      // (e.g. a stale CSRF cookie) — staying "logged in" in the UI while
+      // the server already considers the cookie invalid is worse than a
+      // local-only sign-out.
+      setUsername(null)
+    }
   }, [])
 
   return (

@@ -44,6 +44,16 @@ export function BrowserPage() {
   const [dragActive, setDragActive] = React.useState(false)
   const [sharingEnabled, setSharingEnabled] = React.useState(false)
   const [searchEnabled, setSearchEnabled] = React.useState(false)
+  const [showHidden, setShowHidden] = React.useState(false)
+  const [foldersFirst, setFoldersFirst] = React.useState(true)
+
+  const displayedEntries = React.useMemo(() => {
+    let list = showHidden ? entries : entries.filter((e) => !e.name.startsWith("."))
+    if (foldersFirst) {
+      list = [...list].sort((a, b) => (a.isDir === b.isDir ? 0 : a.isDir ? -1 : 1))
+    }
+    return list
+  }, [entries, showHidden, foldersFirst])
 
   React.useEffect(() => {
     api
@@ -95,7 +105,7 @@ export function BrowserPage() {
   function toggleSelect(entry: FileEntry, index: number, e: React.MouseEvent) {
     if (e.shiftKey && anchorIndex !== null) {
       const [start, end] = anchorIndex < index ? [anchorIndex, index] : [index, anchorIndex]
-      setSelected(new Set(entries.slice(start, end + 1).map((en) => en.path)))
+      setSelected(new Set(displayedEntries.slice(start, end + 1).map((en) => en.path)))
       return
     }
     const additive = e.metaKey || e.ctrlKey
@@ -247,7 +257,7 @@ export function BrowserPage() {
         if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files)
       }}
     >
-      <Sidebar onNavigateRoot={() => navigate("/")} />
+      <Sidebar />
 
       <div className="flex flex-1 flex-col gap-3 overflow-hidden">
         <div className="flex items-center gap-3">
@@ -279,6 +289,10 @@ export function BrowserPage() {
           }}
           onShowShares={() => setDialog({ kind: "sharedLinks" })}
           sharingEnabled={sharingEnabled}
+          showHidden={showHidden}
+          onShowHiddenChange={setShowHidden}
+          foldersFirst={foldersFirst}
+          onFoldersFirstChange={setFoldersFirst}
         />
 
         {error && <div className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>}
@@ -293,7 +307,7 @@ export function BrowserPage() {
             <div className="flex flex-1 items-center justify-center text-sm text-muted">Loading...</div>
           ) : (
             <FileView
-              entries={entries}
+              entries={displayedEntries}
               viewMode={viewMode}
               selected={selected}
               onSelect={toggleSelect}

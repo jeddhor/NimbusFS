@@ -18,7 +18,7 @@ function GridThumbnail({ entry }: { entry: FileEntry }) {
   const [failed, setFailed] = React.useState(false)
 
   if (entry.isDir || !thumbnailable(entry.name) || failed) {
-    return <FileTypeIcon entry={entry} className="h-10 w-10 text-accent" />
+    return <FileTypeIcon entry={entry} className="h-10 w-10" />
   }
 
   return (
@@ -115,7 +115,7 @@ export function FileView({ entries, viewMode, selected, onSelect, onOpen, onCont
               )}
             >
               <td className="flex items-center gap-2 px-4 py-2">
-                <FileTypeIcon entry={entry} className="h-4 w-4 text-accent" />
+                <FileTypeIcon entry={entry} className="h-4 w-4" />
                 {entry.name}
               </td>
               <td className="px-4 py-2 text-muted">{entry.isDir ? "—" : formatBytes(entry.size)}</td>

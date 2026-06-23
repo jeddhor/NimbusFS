@@ -10,6 +10,7 @@ import {
   File as FileGeneric,
 } from "lucide-react"
 import type { FileEntry } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 const EXT_GROUPS: Record<string, string[]> = {
   image: ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico", "avif"],
@@ -35,27 +36,41 @@ function groupOf(ext: string): string | null {
   return null
 }
 
+const GROUP_COLORS: Record<string, string> = {
+  folder: "text-sky-400",
+  image: "text-pink-400",
+  video: "text-fuchsia-400",
+  audio: "text-emerald-400",
+  archive: "text-amber-400",
+  code: "text-cyan-400",
+  spreadsheet: "text-green-400",
+  pdf: "text-red-400",
+  document: "text-indigo-400",
+  generic: "text-muted",
+}
+
 export function FileTypeIcon({ entry, className }: { entry: FileEntry; className?: string }) {
-  if (entry.isDir) return <Folder className={className} />
-  const group = groupOf(extOf(entry.name))
+  if (entry.isDir) return <Folder className={cn(GROUP_COLORS.folder, className)} />
+  const group = groupOf(extOf(entry.name)) ?? "generic"
+  const color = GROUP_COLORS[group] ?? GROUP_COLORS.generic
   switch (group) {
     case "image":
-      return <FileImage className={className} />
+      return <FileImage className={cn(color, className)} />
     case "video":
-      return <FileVideo className={className} />
+      return <FileVideo className={cn(color, className)} />
     case "audio":
-      return <FileAudio className={className} />
+      return <FileAudio className={cn(color, className)} />
     case "archive":
-      return <FileArchive className={className} />
+      return <FileArchive className={cn(color, className)} />
     case "code":
-      return <FileCode className={className} />
+      return <FileCode className={cn(color, className)} />
     case "spreadsheet":
-      return <FileSpreadsheet className={className} />
+      return <FileSpreadsheet className={cn(color, className)} />
     case "pdf":
     case "document":
-      return <FileText className={className} />
+      return <FileText className={cn(color, className)} />
     default:
-      return <FileGeneric className={className} />
+      return <FileGeneric className={cn(color, className)} />
   }
 }
 
