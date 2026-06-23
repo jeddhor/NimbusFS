@@ -16,7 +16,7 @@ export function Sidebar({
 
   return (
     <aside className="glass flex h-full w-60 flex-shrink-0 flex-col rounded-2xl p-4">
-      <div className="mb-6 flex items-center gap-2 px-1">
+      <div className="mb-6 flex items-center justify-center gap-2 px-1">
         <Logo size={32} />
         <Wordmark className="text-xl" />
       </div>
