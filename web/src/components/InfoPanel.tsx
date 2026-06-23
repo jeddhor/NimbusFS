@@ -1,13 +1,7 @@
 import * as React from "react"
-import { FileTypeIcon, extOf } from "@/lib/fileIcons"
+import { FileTypeIcon, fileTypeLabel } from "@/lib/fileIcons"
 import { formatBytes, formatDate } from "@/lib/utils"
 import type { FileEntry } from "@/lib/api"
-
-function typeLabel(entry: FileEntry): string {
-  if (entry.isDir) return "Folder"
-  const ext = extOf(entry.name)
-  return ext ? `${ext.toUpperCase()} File` : "File"
-}
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -23,7 +17,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-export function InfoPanel({ entries }: { entries: FileEntry[] }) {
+export function InfoPanel({ entries, fileTypeNames }: { entries: FileEntry[]; fileTypeNames: Record<string, string> }) {
   if (entries.length === 0) {
     return (
       <div className="flex-1 border-t border-border pt-4">
@@ -43,7 +37,7 @@ export function InfoPanel({ entries }: { entries: FileEntry[] }) {
           </span>
         </div>
         <div className="flex flex-col px-1 text-xs">
-          <Row label="Type" value={typeLabel(e)} />
+          <Row label="Type" value={fileTypeLabel(e, fileTypeNames)} />
           <Row label="Size" value={e.isDir ? "—" : formatBytes(e.size)} />
           <Row label="Modified" value={formatDate(e.modified)} />
           <Row label="Owner" value={e.owner} />

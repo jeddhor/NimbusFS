@@ -82,6 +82,17 @@ export function thumbnailable(name: string): boolean {
   return THUMBNAIL_EXTS.has(extOf(name))
 }
 
+// fileTypeLabel produces a human-readable type name for a file, e.g.
+// "Python script" instead of "PY File". `names` comes from /api/file-types,
+// which is sourced from the system's shared-mime-info database (see
+// internal/mimetypes) rather than a hand-maintained list here.
+export function fileTypeLabel(entry: FileEntry, names: Record<string, string>): string {
+  if (entry.isDir) return "Folder"
+  const ext = extOf(entry.name)
+  if (ext && names[ext]) return names[ext]
+  return ext ? `${ext.toUpperCase()} File` : "File"
+}
+
 export function previewKind(name: string): "image" | "video" | "audio" | "pdf" | "text" | null {
   const ext = extOf(name)
   if (EXT_GROUPS.image.includes(ext)) return "image"

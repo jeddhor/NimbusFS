@@ -19,6 +19,7 @@ import (
 	"nimbusfs/internal/auth"
 	"nimbusfs/internal/config"
 	"nimbusfs/internal/fsops"
+	"nimbusfs/internal/mimetypes"
 	"nimbusfs/internal/search"
 	"nimbusfs/internal/store"
 	"nimbusfs/internal/thumbnail"
@@ -33,6 +34,7 @@ type API struct {
 	shareUnlockSecret []byte
 	searchIndex       *search.Index
 	thumbnails        *thumbnail.Generator
+	fileTypeNames     map[string]string
 }
 
 func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManager, st *store.Store, searchIndex *search.Index, thumbnails *thumbnail.Generator) *API {
@@ -47,6 +49,7 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 		shareUnlockSecret: secret,
 		searchIndex:       searchIndex,
 		thumbnails:        thumbnails,
+		fileTypeNames:     mimetypes.Load(),
 	}
 }
 
@@ -57,6 +60,13 @@ func (a *API) Features(w http.ResponseWriter, r *http.Request) {
 		"sharing": a.cfg.Sharing.Enabled,
 		"search":  a.cfg.Search.Enabled,
 	})
+}
+
+// FileTypes reports the extension -> human-readable type name map (e.g.
+// "py" -> "Python script") derived from the system's shared-mime-info
+// database, so the UI can show a friendly type instead of "PY File".
+func (a *API) FileTypes(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, a.fileTypeNames)
 }
 
 // AuthMethods reports which login methods are enabled, so the login page

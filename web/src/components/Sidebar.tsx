@@ -5,7 +5,13 @@ import { Logo, Wordmark } from "@/components/Logo"
 import { InfoPanel } from "@/components/InfoPanel"
 import type { FileEntry } from "@/lib/api"
 
-export function Sidebar({ selectedEntries }: { selectedEntries: FileEntry[] }) {
+export function Sidebar({
+  selectedEntries,
+  fileTypeNames,
+}: {
+  selectedEntries: FileEntry[]
+  fileTypeNames: Record<string, string>
+}) {
   const { username, logout } = useAuth()
 
   return (
@@ -15,7 +21,7 @@ export function Sidebar({ selectedEntries }: { selectedEntries: FileEntry[] }) {
         <Wordmark className="text-xl" />
       </div>
 
-      <InfoPanel entries={selectedEntries} />
+      <InfoPanel entries={selectedEntries} fileTypeNames={fileTypeNames} />
 
       <div className="flex flex-col gap-2 border-t border-border pt-4">
         <p className="truncate px-1 text-xs text-muted">Signed in as {username}</p>

@@ -84,6 +84,9 @@ export const api = {
   features() {
     return request<{ sharing: boolean; search: boolean }>("/api/features")
   },
+  fileTypes() {
+    return request<Record<string, string>>("/api/file-types")
+  },
   sshStart(username: string) {
     return request<{ code: string; pollToken: string; expiresIn: number }>("/api/auth/ssh/start", {
       method: "POST",

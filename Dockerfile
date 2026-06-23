@@ -27,6 +27,11 @@ RUN CGO_ENABLED=1 go build -trimpath -ldflags="-s -w" -o /out/nimbusfs ./cmd/nim
 # --- runtime ---
 FROM debian:bookworm-slim
 
+# shared-mime-info provides /usr/share/mime/packages/freedesktop.org.xml,
+# the extension -> human-readable type name database (internal/mimetypes)
+# used to label files in the UI (e.g. "Python script" instead of "PY
+# File"). A few MB, no heavy transitive deps.
+#
 # ffmpeg/poppler-utils are only used opportunistically for video/PDF
 # thumbnails (internal/thumbnail) and pull in a surprisingly large
 # transitive dependency tree on Debian (SDL2, X11, Mesa — none of which a
@@ -37,6 +42,7 @@ ARG WITH_THUMBNAIL_TOOLS=true
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpam0g \
     ca-certificates \
+    shared-mime-info \
     $(if [ "$WITH_THUMBNAIL_TOOLS" = "true" ]; then echo ffmpeg poppler-utils; fi) \
     && rm -rf /var/lib/apt/lists/*
 

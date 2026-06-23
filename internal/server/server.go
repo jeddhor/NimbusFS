@@ -27,6 +27,7 @@ func New(cfg *config.Config, sandbox *fsops.Sandbox, sessions *auth.SessionManag
 	mux.HandleFunc("GET /api/me", a.RequireAuth(a.Me))
 	mux.HandleFunc("GET /api/auth/methods", a.AuthMethods)
 	mux.HandleFunc("GET /api/features", a.RequireAuth(a.Features))
+	mux.HandleFunc("GET /api/file-types", a.RequireAuth(a.FileTypes))
 
 	// SSH device-flow endpoints are themselves the authentication mechanism
 	// (like /api/login), so none of them require an existing session or CSRF token.

@@ -46,6 +46,7 @@ export function BrowserPage() {
   const [searchEnabled, setSearchEnabled] = React.useState(false)
   const [showHidden, setShowHidden] = React.useState(false)
   const [foldersFirst, setFoldersFirst] = React.useState(true)
+  const [fileTypeNames, setFileTypeNames] = React.useState<Record<string, string>>({})
 
   const displayedEntries = React.useMemo(() => {
     let list = showHidden ? entries : entries.filter((e) => !e.name.startsWith("."))
@@ -71,6 +72,10 @@ export function BrowserPage() {
         setSharingEnabled(false)
         setSearchEnabled(false)
       })
+    api
+      .fileTypes()
+      .then(setFileTypeNames)
+      .catch(() => setFileTypeNames({}))
   }, [])
 
   const refresh = React.useCallback((p: string) => {
@@ -262,7 +267,7 @@ export function BrowserPage() {
         if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files)
       }}
     >
-      <Sidebar selectedEntries={selectedEntries} />
+      <Sidebar selectedEntries={selectedEntries} fileTypeNames={fileTypeNames} />
 
       <div className="flex flex-1 flex-col gap-3 overflow-hidden">
         <div className="flex items-center gap-3">
