@@ -39,6 +39,21 @@ type commentXML struct {
 	Value string `xml:",chardata"`
 }
 
+// overrides corrects the small number of extensions where
+// shared-mime-info's own answer is actively misleading for a file browser,
+// because the extension was claimed by an older, less common format before
+// the now far more common one existed. shared-mime-info has no notion of
+// "more likely in practice" — it just picks a registered mime-type, so
+// these aren't disambiguation bugs to report upstream, just a mismatch
+// between the spec's history and what users actually mean by ".ts" today:
+//   - "ts" resolves to Qt Linguist's translation-source format
+//     (text/vnd.trolltech.linguist), not TypeScript.
+//   - "tsx" resolves to a Tiled map editor tileset, not TypeScript JSX.
+var overrides = map[string]string{
+	"ts":  "TypeScript source code",
+	"tsx": "TypeScript JSX source code",
+}
+
 // Load builds an extension (lowercase, no leading dot) -> human-readable
 // type name map from the system's shared-mime-info database. It returns an
 // empty, non-nil map if the database isn't installed, so callers can fall
@@ -54,10 +69,17 @@ func Load() map[string]string {
 			log.Printf("mimetypes: parsing %s: %v", path, err)
 			continue
 		}
+		for ext, name := range overrides {
+			names[ext] = name
+		}
 		return names
 	}
 	log.Printf("mimetypes: no shared-mime-info database found (expected shared-mime-info package); file type names will be generic")
-	return map[string]string{}
+	names := map[string]string{}
+	for ext, name := range overrides {
+		names[ext] = name
+	}
+	return names
 }
 
 type candidate struct {
